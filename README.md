@@ -23,4 +23,4 @@
 - 显示历史消息（session_state）
 - LangChain 链式调用：`Retrieval -> Prompt -> LLM -> Output`
 - 支持 **流式输出**
-- 支持 **消息历史文件存储**（FileChatMessageHistory）
+- 支持 **消息历史文件存储**
