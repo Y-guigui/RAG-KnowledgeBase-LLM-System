@@ -19,10 +19,8 @@ uploader_file=st.file_uploader(
     accept_multiple_files=False,   # False表示仅接受一个文件的上传
 )
 
-
 if "service" not in st.session_state:          # 会话状态字典，session_state本身也是字典
     st.session_state["service"]=KnowledgeBaseService()
-
 
 if uploader_file is not None:
     # 提取文件信息
