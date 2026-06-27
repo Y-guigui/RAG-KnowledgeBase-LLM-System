@@ -1,5 +1,5 @@
 """
-知识库
+知识入库
 """
 import os
 import hashlib
@@ -11,15 +11,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-md5_path = os.getenv("MD5_PATH", "./data/md5.text")
-collection_name = os.getenv("COLLECTION_NAME", "rag")
-persist_directory = os.getenv("PERSIST_DIRECTORY", "./data/chroma_db")
+md5_path = os.getenv("MD5_PATH")
+collection_name = os.getenv("COLLECTION_NAME")
+persist_directory = os.getenv("PERSIST_DIRECTORY")
 api_key = os.getenv("API_KEY")
-
-chunk_size = int(os.getenv("CHUNK_SIZE", 1000))
-chunk_overlap = int(os.getenv("CHUNK_OVERLAP", 200))
+embedding_model_name = os.getenv("EMBEDDING_MODEL_NAME")
+chunk_size = int(os.getenv("CHUNK_SIZE"))
+chunk_overlap = int(os.getenv("CHUNK_OVERLAP"))
 separators = ["\n\n", "\n", ". ", "。", "!", "！", " ", "?", "？"]
-max_spliter_char_number = int(os.getenv("MAX_SPLITER_CHAR_NUMBER", 1000))
+max_spliter_char_number = int(os.getenv("MAX_SPLITER_CHAR_NUMBER"))
 
 
 def check_md5(md5_str:str):
@@ -43,7 +43,7 @@ def save_md5(md5_str:str):
         f.write(md5_str + '\n')
 
 def get_string_md5(input_str:str ,encoding='utf-8'):
-    """将出传入的字符串转换为md5字符串"""
+    """将传入的字符串转换为md5字符串"""
 
     # 将字符串转换为bytes字节数组
     str_bytes = input_str.encode(encoding=encoding)
@@ -62,8 +62,8 @@ class KnowledgeBaseService(object):
         os.makedirs(persist_directory, exist_ok=True)
 
         embedding = DashScopeEmbeddings(
-            model="text-embedding-v4",
-            dashscope_api_key=api_key,  # <-- 关键
+            model=embedding_model_name,
+            dashscope_api_key=api_key,
         )
 
         self.chroma = Chroma(                         # 向量存储的示例 Chroma向量库对象
@@ -71,6 +71,7 @@ class KnowledgeBaseService(object):
             embedding_function=embedding,
             persist_directory=persist_directory       #数据库本地存储文件夹
         )          # 向量存储的实例，Chroma向量库对象
+
         self.spliter=RecursiveCharacterTextSplitter(  # 文本分割器的对象
             chunk_size=chunk_size,                    # 分割后的文本段最大长度
             chunk_overlap=chunk_overlap,              # 连续文本段之间的字符重叠数量
@@ -112,4 +113,3 @@ if __name__ =='__main__':
     service = KnowledgeBaseService()
     resource = service.upload_by_str("周杰伦", "testfile")
     print(resource)
-   
