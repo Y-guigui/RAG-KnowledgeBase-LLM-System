@@ -1,3 +1,5 @@
+import os
+
 from langchain_core.documents import Document
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough, RunnableWithMessageHistory, RunnableLambda
@@ -5,7 +7,8 @@ from vector_stores import VectorStoreService
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_openai import ChatOpenAI
-import os
+
+from file_history_store import get_history
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -37,7 +40,9 @@ class RagService(object):
             [
                 ("system", "以我提供的已知参考资料为主，"
                  "简洁和专业的回答用户问题。参考资料:{context}。"),
-                ("user", "请回答用户提问：{input}")
+                ("system", "并且我提供用户的对话历史记录，如下："),
+                MessagesPlaceholder("history"),
+                ("human", "请回答用户提问：{input}")
             ]
         )
         # 聊天模型
@@ -71,9 +76,11 @@ class RagService(object):
                 "context": retriver | format_document
             } | self.prompt_template | print_prompt | self.chat_model | StrOutputParser()
         )
+
+        RunnableWithMessageHistory(
+            chain,
+            get_history,
+            input_message_key="input",
+            history_message_key="history",
+        )
         return chain
-
-
-if __name__ == '__main__':
-    rag_service = RagService().chain.invoke("我体重175斤，尺码推荐")
-    print(rag_service)
