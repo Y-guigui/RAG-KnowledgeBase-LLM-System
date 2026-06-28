@@ -1,3 +1,4 @@
+from operator import itemgetter
 import os
 
 from langchain_core.documents import Document
@@ -58,7 +59,7 @@ class RagService(object):
 
     def __get_chain(self):
         """获取最终的执行链"""
-        retriver = self.vector_service.get_retriever()
+        retriever = self.vector_service.get_retriever()
 
         def format_document(docs: list[Document]) -> str:
             if not docs:
@@ -69,18 +70,31 @@ class RagService(object):
                 formatted_str += f"文档片段: {doc.page_content}\n文档元数据：{doc.metadata}\n\n"
             return formatted_str
 
-        # 检索器 | 提示词 | model | 字符串输出解析器
         chain = (
-            {
-                "input": RunnablePassthrough(),
-                "context": retriver | format_document
-            } | self.prompt_template | print_prompt | self.chat_model | StrOutputParser()
-        )
+            RunnablePassthrough.assign(
+                context=itemgetter("input") | retriever | format_document)
+            )| self.prompt_template | print_prompt | self.chat_model | StrOutputParser()
 
-        RunnableWithMessageHistory(
+        # 检索器 | 提示词 | model | 字符串输出解析器
+        # retriver需要的输入是字符串，而拼接的conversation_chain是字典，dict -> str
+       
+
+        conversation_chain = RunnableWithMessageHistory(
             chain,
             get_history,
-            input_message_key="input",
-            history_message_key="history",
+            input_messages_key="input",
+            history_messages_key="history",
         )
-        return chain
+        return conversation_chain
+
+if __name__ == '__main__':
+    # session id 配置
+    session_config ={
+        "configurable":{
+            "session_id":"user_001",
+        }
+    }
+    result = RagService().chain.invoke({"input":"我身高是175，推荐穿什么尺码的衣服。"},session_config)
+    print(result)
+    # res = RagService().chain.invoke({"input":"我之前问了什么"},session_config)
+    # print(res)
