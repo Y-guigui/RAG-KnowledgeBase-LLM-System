@@ -1,3 +1,7 @@
+"""
+用户提问 → 检索 → 拼上下文 → LLM回答
+"""
+
 from operator import itemgetter
 import os
 
